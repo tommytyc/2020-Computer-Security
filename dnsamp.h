@@ -1,11 +1,13 @@
 #pragma once
 #include <iostream>
+#include <string>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/ip.h>
 #include <netinet/udp.h>
 #include <unistd.h>
 #include <arpa/inet.h>
+using namespace std;
 
 typedef struct udphdr uh;
 typedef struct iphdr  ih;
@@ -14,8 +16,8 @@ typedef unsigned short int usint;
 typedef struct {
 	usint query_id;
 	usint flags;
-	usint qcnt;
-	usint anscnt;
+	usint qcount;
+	usint anscount;
 	usint authrr;
 	usint addrr;
 }dh;
