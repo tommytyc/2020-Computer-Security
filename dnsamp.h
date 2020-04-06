@@ -7,6 +7,7 @@
 #include <netinet/udp.h>
 #include <unistd.h>
 #include <arpa/inet.h>
+#define PACKET_LENGTH 8192
 using namespace std;
 
 typedef struct udphdr uh;
