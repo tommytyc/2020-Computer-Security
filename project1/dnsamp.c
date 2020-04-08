@@ -118,6 +118,7 @@ void SendDnsPacket(char* dnsip, char* spoofip, int port){
 		sendto(sd, buf, ipheader->tot_len, 0, (struct sockaddr *)&sin, sizeof(sin));
 	}
 	close(sd);
+	free(psdata);
 	return;
 
 }
