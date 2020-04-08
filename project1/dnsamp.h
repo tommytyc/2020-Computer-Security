@@ -1,6 +1,6 @@
 #pragma once
-#include <iostream>
-#include <string>
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -11,7 +11,6 @@
 #define PACKET_LENGTH 8192
 #define FLAG_Q 0x0100
 #define QUERY_ID 0x668e
-using namespace std;
 
 typedef struct udphdr uh;
 typedef struct iphdr  ih;

