@@ -29,3 +29,11 @@ typedef struct {
 	usint dnsq_type;
 	usint dnsq_class;
 }query;
+
+typedef struct {
+	unsigned int saddr;
+	unsigned int daddr;
+	unsigned char fill;
+	unsigned char proto;
+	unsigned short len;
+}ph;

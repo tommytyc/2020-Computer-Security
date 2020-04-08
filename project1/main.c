@@ -4,8 +4,8 @@ void Print_error(char* error);
 void SendDnsPacket(char* dnsip, char* spoofip, int port);
 void CreateDnsHeader(dh *dns);
 void CreateQueryInfo(query *q);
-unsigned short CheckSum(unsigned short *ptr, int size);
-unsigned short CheckUdpSum(int length, unsigned short *ptr);
+void CreatePseudoHeader(ph *psheader, char* spoofip, char* dnsip);
+unsigned short CheckIpUdpSum(int length, unsigned char *ptr);
 
 
 int main(int argc, char *argv[]){
