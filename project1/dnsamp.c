@@ -75,7 +75,7 @@ void SendDnsPacket(char* dnsip, char* spoofip, int port){
 	*dns_server++ = 'o';
 	*dns_server++ = 'm';
 	*dns_server++ = '\0';
-	int length = 16;
+	int length = 20;
 	query *Query = (query *)&dns_data[(sizeof(dnsheader) + length)];
 	CreateQueryInfo(Query);
 
@@ -121,7 +121,7 @@ void SendDnsPacket(char* dnsip, char* spoofip, int port){
 
 	int one = 1;
 	const int *val = &one;
-	sd = socket(PF_INET, SOCK_RAW, IPPROTO_UDP);
+	sd = socket(PF_INET, SOCK_RAW, IPPROTO_RAW);
 	if(sd < 0){
 		printf("sd = %d\n", sd);
 		PrintError("socket error");
