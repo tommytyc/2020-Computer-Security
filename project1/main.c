@@ -7,7 +7,6 @@ void CreateQueryInfo(query *q);
 void CreatePseudoHeader(ph *psheader, char* spoofip, char* dnsip);
 unsigned short CheckIpUdpSum(int length, unsigned char *ptr);
 
-
 int main(int argc, char *argv[]){
 	int i = 0;
 	char* victim = argv[1];

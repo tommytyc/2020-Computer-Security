@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/ip.h>
@@ -14,20 +15,19 @@
 
 typedef struct udphdr uh;
 typedef struct iphdr  ih;
-typedef unsigned short int usint;
 
 typedef struct {
-	usint query_id;
-	usint flags;
-	usint qcount;
-	usint anscount;
-	usint authrr;
-	usint addrr;
+	unsigned short query_id;
+	unsigned short flags;
+	unsigned short qcount;
+	unsigned short anscount;
+	unsigned short authrr;
+	unsigned short addrr;
 }dh;
 
 typedef struct {
-	usint dnsq_type;
-	usint dnsq_class;
+	unsigned short dnsq_type;
+	unsigned short dnsq_class;
 }query;
 
 typedef struct {

