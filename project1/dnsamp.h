@@ -10,7 +10,7 @@
 #include <unistd.h>
 #include <arpa/inet.h>
 #define PACKET_LENGTH 8192
-#define FLAG_Q 0x0100
+#define FLAG_Q 0x0120
 #define QUERY_ID 0x668e
 
 typedef struct udphdr uh;
@@ -29,6 +29,16 @@ typedef struct {
 	unsigned short dnsq_type;
 	unsigned short dnsq_class;
 }query;
+
+typedef struct {
+	unsigned char name;
+	unsigned short type;
+	unsigned short pld_size;
+	unsigned char HinERcode;
+	unsigned char EDNS0;
+	unsigned short Z;
+	unsigned short length;	
+}add_rcrd;
 
 typedef struct {
 	unsigned int saddr;
