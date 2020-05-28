@@ -15,6 +15,11 @@ for i in range(0, 256):
         break
 file_name = 'task1_result.log'
 new_tmp = tmp.replace('1234567', '0616078')
-print(new_tmp, file = open(file_name, 'w'))
+
+cipher = ''
+for i in range(len(new_tmp)):
+    cipher += XOR(new_tmp[i], chr(key))
+
+print(cipher, file = open(file_name, 'w'), end = '')
 
 f.close()
